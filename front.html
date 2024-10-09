@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Solana Token Claim</title>
+
+    <!-- Correct CDN for solana/web3.js -->
+    <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
+    <script>
+        // Simple buffer definition
+        window.Buffer = {
+            alloc: (size) => new Uint8Array(size) // Simple buffer allocation
+        };
+    </script>
+</head>
+<body>
+    <h1>Solana Token Claim</h1>
+    <button id="claim-button">Claim</button>
+
+    <script type="text/javascript">
+        // Using solanaWeb3 from the correct global object defined in the solana web3 library
+        const connection = new solanaWeb3.Connection(solanaWeb3.clusterApiUrl('devnet'));
+
+        async function claimTokens() {
+            const provider = window.solana;
+            if (!provider) {
+                alert("Please install a Solana wallet like Phantom");
+                return;
+            }
+            await provider.connect();
+
+            const programId = new solanaWeb3.PublicKey("2qg7qZZSrx3D7Jr3MJvvbsNHksJf5kZbNKARZfxG4jvm");  // Your program ID
+            const userPublicKey = provider.publicKey;
+
+            // Fetch the recent blockhash
+            const { blockhash } = await connection.getLatestBlockhash();
+
+            const transaction = new solanaWeb3.Transaction({ recentBlockhash: blockhash, feePayer: userPublicKey }).add(
+                new solanaWeb3.TransactionInstruction({
+                    keys: [
+                        { pubkey: userPublicKey, isSigner: true, isWritable: true },
+                        { pubkey: new solanaWeb3.PublicKey("2qg7qZZSrx3D7Jr3MJvvbsNHksJf5kZbNKARZfxG4jvm"), isSigner: false, isWritable: true },  // Replace with actual receiver public key if different
+                    ],
+                    programId: programId,
+                    data: Buffer.alloc(0),  // No additional data
+                })
+            );
+
+            const signature = await provider.signAndSendTransaction(transaction);
+            console.log("Transaction signature", signature);
+            await connection.confirmTransaction(signature);
+            alert("Tokens claimed successfully!");
+        }
+
+        document.getElementById('claim-button').addEventListener('click', claimTokens);
+    </script>
+</body>
+</html>
